@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,26 +7,27 @@ using recipedia.Database;
 using recipedia.Models;
 using recipedia.Models.API;
 using recipedia.Models.Auth;
+using recipedia.Utils;
 using System.Net;
 
 namespace recipedia.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<User> userManager;
         private readonly SignInManager<User> signInManager;
         private readonly DBContext db;
         private readonly APIResponse response;
-
-
-        public AuthController(UserManager<User> _userManager, SignInManager<User> _signInManager, DBContext _db)
+        private readonly JwtTokenGenerator jwtTokenGenerator;
+        public AuthController(UserManager<User> _userManager, SignInManager<User> _signInManager, DBContext _db, JwtTokenGenerator _jwtTokenGenerator)
         {
             userManager = _userManager;
             signInManager = _signInManager;
             db = _db;
             response = new APIResponse();
+            jwtTokenGenerator = _jwtTokenGenerator;
         }
 
         private async Task<string> GenerateUniqueUserNameAsync(string baseName)
@@ -50,6 +52,15 @@ namespace recipedia.Controllers
                 response.StatusCode = 400;
                 response.IsSuccess = false;
                 response.Message = "Bad Request";
+
+                return response;
+            }
+
+            var userExists = await userManager.FindByEmailAsync(newUser.Email);
+            if (userExists != null) {
+                response.StatusCode = 400;
+                response.IsSuccess = false;
+                response.Message = "Email already exists";
 
                 return response;
             }
@@ -123,13 +134,19 @@ namespace recipedia.Controllers
 
                 return response;
             }
-            
+
             //var user = await userManager.FindByNameAsync(loginCred.Username);
+            var token = jwtTokenGenerator.GenerateToken(user);
 
             response.StatusCode = 200;
             response.Message = "Logged in successfully.";
             response.IsSuccess = true;
-            response.Data = user;
+            response.Data = new
+            {
+                user = user,
+                bearerToken = token
+            };
+
             return response;
         }
 
@@ -167,7 +184,7 @@ namespace recipedia.Controllers
         [HttpPost("reset-password")]
         public async Task<APIResponse> ResetPassword([FromBody] ResetPassword resetPassword)
         {
-            var user = await userManager.FindByEmailAsync(resetPassword.Id);
+            var user = await userManager.FindByIdAsync(resetPassword.Id);
             var token = WebUtility.UrlDecode(resetPassword.Token);
             var result = await userManager.ResetPasswordAsync(user!,token, resetPassword.NewPassword);
 
@@ -184,6 +201,33 @@ namespace recipedia.Controllers
             user = await userManager.FindByIdAsync(resetPassword.Id);
             response.StatusCode = 200;
             response.Message = "Password reset successfully.";
+            response.IsSuccess = true;
+            response.Data = user;
+
+            return response;
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<APIResponse> ChangePassword([FromBody] ChangePassword changePassword)
+        {
+            var user = await userManager.FindByEmailAsync(changePassword.Email);
+            //var token = WebUtility.UrlDecode(resetPassword.Token);
+            var result = await userManager.ChangePasswordAsync(user!, changePassword.CurrentPassword,changePassword.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                response.StatusCode = 400;
+                response.Message = "Error Occurred.";
+                response.IsSuccess = false;
+                response.Errors = result.Errors;
+
+                return response;
+            }
+
+            user = await userManager.FindByEmailAsync(changePassword.Email);
+            response.StatusCode = 200;
+            response.Message = "Password changed successfully.";
             response.IsSuccess = true;
             response.Data = user;
 
