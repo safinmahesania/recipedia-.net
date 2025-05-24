@@ -1,9 +1,33 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using recipedia.Database;
 using recipedia.Models;
+using recipedia.Utils;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//Setting up JWT Token
+//var configuration = builder.Configuration;
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options => {
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
+builder.Services.AddScoped<JwtTokenGenerator>();
 
 // Add services to the container.
 
@@ -40,7 +64,6 @@ app.MapIdentityApi<User>();
 
 app.UseHttpsRedirection();
 
-//app.UseAuthorization();
 app.UseAuthentication();
 app.UseAuthorization();
 
