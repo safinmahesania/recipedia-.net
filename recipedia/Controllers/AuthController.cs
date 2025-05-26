@@ -1,8 +1,6 @@
-﻿using Azure;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using recipedia.Database;
 using recipedia.Models;
 using recipedia.Models.API;
@@ -45,7 +43,8 @@ namespace recipedia.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<APIResponse> Register([FromBody] Register newUser) {
+        public async Task<APIResponse> Register([FromBody] Register newUser)
+        {
 
             if (!ModelState.IsValid)
             {
@@ -57,7 +56,8 @@ namespace recipedia.Controllers
             }
 
             var userExists = await userManager.FindByEmailAsync(newUser.Email);
-            if (userExists != null) {
+            if (userExists != null)
+            {
                 response.StatusCode = 400;
                 response.IsSuccess = false;
                 response.Message = "Email already exists";
@@ -106,7 +106,8 @@ namespace recipedia.Controllers
         public async Task<APIResponse> Login([FromBody] Login loginCred)
         {
 
-            if (!ModelState.IsValid) {
+            if (!ModelState.IsValid)
+            {
                 response.StatusCode = 400;
                 response.IsSuccess = false;
                 response.Message = "Bad Request";
@@ -173,10 +174,11 @@ namespace recipedia.Controllers
             response.StatusCode = 200;
             response.Message = "User found.";
             response.IsSuccess = true;
-            response.Data = new {
+            response.Data = new
+            {
                 token = token,
                 user = user
-            }; 
+            };
 
             return response;
         }
@@ -186,7 +188,7 @@ namespace recipedia.Controllers
         {
             var user = await userManager.FindByIdAsync(resetPassword.Id);
             var token = WebUtility.UrlDecode(resetPassword.Token);
-            var result = await userManager.ResetPasswordAsync(user!,token, resetPassword.NewPassword);
+            var result = await userManager.ResetPasswordAsync(user!, token, resetPassword.NewPassword);
 
             if (!result.Succeeded)
             {
@@ -213,7 +215,7 @@ namespace recipedia.Controllers
         {
             var user = await userManager.FindByEmailAsync(changePassword.Email);
             //var token = WebUtility.UrlDecode(resetPassword.Token);
-            var result = await userManager.ChangePasswordAsync(user!, changePassword.CurrentPassword,changePassword.NewPassword);
+            var result = await userManager.ChangePasswordAsync(user!, changePassword.CurrentPassword, changePassword.NewPassword);
 
             if (!result.Succeeded)
             {

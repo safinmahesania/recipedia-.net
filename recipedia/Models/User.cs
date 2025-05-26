@@ -11,6 +11,7 @@ namespace recipedia.Models
         public DateTime LastLogin { set; get; }
         public DateTime CreatedAt { set; get; }
         public DateTime UpdatedAt { set; get; }
+        public ICollection<Favorite> Favorites { get; set; }
 
     }
 }

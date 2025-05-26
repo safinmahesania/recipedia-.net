@@ -10,7 +10,8 @@ namespace recipedia.Utils
     {
         private readonly IConfiguration configuration;
 
-        public JwtTokenGenerator(IConfiguration _configuration) {
+        public JwtTokenGenerator(IConfiguration _configuration)
+        {
             configuration = _configuration;
         }
 
@@ -18,10 +19,13 @@ namespace recipedia.Utils
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.Id)
+                //new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                //new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),  // ✅ FIXED!
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.UserName)
             };
+
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -30,7 +34,7 @@ namespace recipedia.Utils
                 issuer: configuration["Jwt:Issuer"],
                 audience: null, // Not required if you're not using audiences
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddMonths(1),
                 signingCredentials: creds
             );
 
