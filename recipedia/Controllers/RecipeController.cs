@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using recipedia.Database;
 using recipedia.Models;
@@ -7,6 +8,7 @@ using recipedia.Models.API;
 namespace recipedia.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/recipe")]
     public class RecipeController
     {
@@ -23,7 +25,7 @@ namespace recipedia.Controllers
         {
             try
             {
-                List<Recipe> data = db.recipe.ToList();
+                List<Recipe> data = db.Recipe.ToList();
                 if (data == null)
                 {
                     response.StatusCode = 204;
@@ -54,7 +56,7 @@ namespace recipedia.Controllers
         {
             try
             {
-                Recipe data = db.recipe.First(u => u.Id == Id);
+                Recipe data = db.Recipe.First(u => u.Id == Id);
                 if (data == null)
                 {
                     response.StatusCode = 204;
@@ -84,7 +86,7 @@ namespace recipedia.Controllers
         {
             try
             {
-                Recipe data = db.recipe.First(u => u.Name == name);
+                Recipe data = db.Recipe.First(u => u.Name == name);
                 if (data == null)
                 {
                     response.StatusCode = 204;
@@ -121,7 +123,7 @@ namespace recipedia.Controllers
                 }
                 else
                 {
-                    db.recipe.Add(recipe);
+                    db.Recipe.Add(recipe);
                     db.SaveChanges();
 
                     response.Data = recipe;
@@ -147,7 +149,7 @@ namespace recipedia.Controllers
         {
             try
             {
-                bool exists = db.recipe.Any(u => u.Id == id);
+                bool exists = db.Recipe.Any(u => u.Id == id);
                 if (!exists)
                 {
                     response.StatusCode = 204;
@@ -156,9 +158,9 @@ namespace recipedia.Controllers
                 }
                 else
                 {
-                    Recipe data = db.recipe.First(u => u.Id == id);
+                    Recipe data = db.Recipe.First(u => u.Id == id);
 
-                    db.recipe.Remove(data);
+                    db.Recipe.Remove(data);
                     db.SaveChanges();
 
                     response.Data = data;
